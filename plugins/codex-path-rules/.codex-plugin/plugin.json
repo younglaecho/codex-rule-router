@@ -1,0 +1,18 @@
+{
+  "name": "codex-path-rules",
+  "version": "0.1.0",
+  "description": "Load repository rules automatically when Codex touches matching paths.",
+  "author": {
+    "name": "younglaecho"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Path Rules",
+    "shortDescription": "Apply rules based on file paths.",
+    "longDescription": "Loads matching .codex/rules files before Codex edits or accesses project files.",
+    "developerName": "younglaecho",
+    "category": "Productivity",
+    "capabilities": ["Path-scoped rules", "PreToolUse enforcement"],
+    "defaultPrompt": "Set up path-scoped Codex rules for this repository."
+  }
+}

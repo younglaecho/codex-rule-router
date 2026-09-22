@@ -1,0 +1,32 @@
+{
+  "description": "End-to-end test for Codex Path Rules.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .codex/hooks/path_rules.py",
+            "timeout": 10,
+            "statusMessage": "Resetting path-scoped rule context"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .codex/hooks/path_rules.py",
+            "timeout": 10,
+            "statusMessage": "Checking path-scoped rules",
+            "additionalContextLimit": 12000
+          }
+        ]
+      }
+    ]
+  }
+}
