@@ -8,7 +8,7 @@ import runpy
 PLUGIN_HOOK = (
     Path(__file__).resolve().parents[3]
     / "plugins"
-    / "codex-path-rules"
+    / "codex-rule-router"
     / "hooks"
     / "path_rules.py"
 )

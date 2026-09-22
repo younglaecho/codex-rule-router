@@ -1,5 +1,5 @@
 {
-  "description": "End-to-end test for Codex Path Rules.",
+  "description": "End-to-end test for Codex Rule Router.",
   "hooks": {
     "SessionStart": [
       {

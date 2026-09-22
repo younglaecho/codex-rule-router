@@ -264,9 +264,12 @@ def glob_matches(pattern: str, relative_path: str) -> bool:
 
 
 def find_project_root(cwd: Path) -> Path:
+    current = cwd.resolve()
+    if (current / ".codex" / "rules").is_dir():
+        return current
     try:
         completed = subprocess.run(
-            ["git", "-C", str(cwd), "rev-parse", "--show-toplevel"],
+            ["git", "-C", str(current), "rev-parse", "--show-toplevel"],
             check=True,
             capture_output=True,
             text=True,
@@ -274,7 +277,6 @@ def find_project_root(cwd: Path) -> Path:
         )
         return Path(completed.stdout.strip()).resolve()
     except (FileNotFoundError, subprocess.SubprocessError):
-        current = cwd.resolve()
         for candidate in (current, *current.parents):
             if (candidate / ".codex").is_dir():
                 return candidate
@@ -405,7 +407,7 @@ def process_event(event: Mapping[str, Any], environ: Mapping[str, str] | None = 
     cwd = Path(str(event.get("cwd") or os.getcwd())).resolve()
     root = find_project_root(cwd)
     session_id = str(event.get("session_id") or "unknown-session")
-    data_dir = Path(env.get("PLUGIN_DATA") or (Path(tempfile.gettempdir()) / "codex-path-rules"))
+    data_dir = Path(env.get("PLUGIN_DATA") or (Path(tempfile.gettempdir()) / "codex-rule-router"))
     state_path = _state_path(data_dir, session_id)
     if event.get("hook_event_name") == "SessionStart":
         try:

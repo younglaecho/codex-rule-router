@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 
-SCRIPT = Path(__file__).parents[1] / "plugins" / "codex-path-rules" / "hooks" / "path_rules.py"
+SCRIPT = Path(__file__).parents[1] / "plugins" / "codex-rule-router" / "hooks" / "path_rules.py"
 SPEC = importlib.util.spec_from_file_location("path_rules", SCRIPT)
 assert SPEC and SPEC.loader
 path_rules = importlib.util.module_from_spec(SPEC)
@@ -245,6 +246,15 @@ Frontend.
         self.assertEqual(path_rules.normalize_candidate("src/a.ts", cwd, root), "fe/src/a.ts")
         self.assertEqual(path_rules.normalize_candidate("fe/src/a.ts", cwd, root), "fe/src/a.ts")
         self.assertEqual(path_rules.normalize_candidate("../.github/workflows/ci.yml", cwd, root), ".github/workflows/ci.yml")
+
+    def test_cwd_with_rules_is_root_even_inside_parent_git_repository(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        parent = Path(temporary.name)
+        subprocess.run(["git", "init", "-q", str(parent)], check=True)
+        child = parent / "demo"
+        (child / ".codex" / "rules").mkdir(parents=True)
+        self.assertEqual(path_rules.find_project_root(child), child.resolve())
 
 
 if __name__ == "__main__":

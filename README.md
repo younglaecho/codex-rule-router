@@ -1,4 +1,4 @@
-# Codex Path Rules
+# Codex Rule Router
 
 Path-scoped repository instructions for Codex, similar to path-filtered rule
 files in other coding agents.
@@ -10,14 +10,14 @@ matching instructions to Codex. Codex then retries with those rules in context.
 ## Install
 
 ```bash
-codex plugin marketplace add younglaecho/codex-path-rules --ref main
-codex plugin add codex-path-rules@codex-path-rules
+codex plugin marketplace add younglaecho/codex-rule-router --ref main
+codex plugin add codex-rule-router@codex-rule-router
 ```
 
 Start a new Codex session after installation. Review and trust the bundled hook
 when Codex prompts you.
 
-For local development, replace `younglaecho/codex-path-rules --ref main` with
+For local development, replace `younglaecho/codex-rule-router --ref main` with
 the path to this repository.
 
 ## Configure a repository
@@ -86,8 +86,8 @@ plugin for conventions that depend on the files being accessed.
 From this repository:
 
 ```bash
-python3 plugins/codex-path-rules/hooks/path_rules.py --validate --cwd /path/to/project
-python3 plugins/codex-path-rules/hooks/path_rules.py --check fe/app/page.tsx --event edit --cwd /path/to/project
+python3 plugins/codex-rule-router/hooks/path_rules.py --validate --cwd /path/to/project
+python3 plugins/codex-rule-router/hooks/path_rules.py --check fe/app/page.tsx --event edit --cwd /path/to/project
 ```
 
 For an end-to-end Codex test without installing the plugin, follow
@@ -105,7 +105,7 @@ hook implementation shipped by the plugin.
 
 ```bash
 python3 -m unittest discover -s tests -v
-python3 /path/to/plugin-creator/scripts/validate_plugin.py plugins/codex-path-rules
+python3 /path/to/plugin-creator/scripts/validate_plugin.py plugins/codex-rule-router
 ```
 
 ## License

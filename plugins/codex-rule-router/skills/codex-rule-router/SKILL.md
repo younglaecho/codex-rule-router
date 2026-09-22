@@ -1,9 +1,9 @@
 ---
-name: codex-path-rules
+name: codex-rule-router
 description: Configure, validate, or troubleshoot repository rules that apply automatically based on file paths. Use when a user asks for Claude-style path rules, scoped coding conventions, or .codex/rules setup.
 ---
 
-# Codex Path Rules
+# Codex Rule Router
 
 Store scoped instructions in `.codex/rules/**/*.md` at the Git repository root.
 

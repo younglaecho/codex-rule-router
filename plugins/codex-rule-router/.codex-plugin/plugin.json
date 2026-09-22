@@ -1,5 +1,5 @@
 {
-  "name": "codex-path-rules",
+  "name": "codex-rule-router",
   "version": "0.1.0",
   "description": "Load repository rules automatically when Codex touches matching paths.",
   "author": {
@@ -7,7 +7,7 @@
   },
   "skills": "./skills/",
   "interface": {
-    "displayName": "Codex Path Rules",
+    "displayName": "Codex Rule Router",
     "shortDescription": "Apply rules based on file paths.",
     "longDescription": "Loads matching .codex/rules files before Codex edits or accesses project files.",
     "developerName": "younglaecho",

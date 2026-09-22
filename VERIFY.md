@@ -3,7 +3,7 @@
 This demo exercises the same hook implementation through a repository-local
 `.codex/hooks.json`, so it does not require installing the plugin.
 
-1. Open `/Users/joyeonglae/develop/codex-path-rules/demo-project` as a new local
+1. Open `/Users/joyeonglae/develop/codex-rule-router/demo-project` as a new local
    Codex project.
 2. Trust the project and review/allow its local hooks when Codex prompts.
 3. Start a fresh task in that project.

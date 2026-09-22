@@ -1,14 +1,14 @@
 {
-  "name": "codex-path-rules",
+  "name": "codex-rule-router",
   "interface": {
-    "displayName": "Codex Path Rules"
+    "displayName": "Codex Rule Router"
   },
   "plugins": [
     {
-      "name": "codex-path-rules",
+      "name": "codex-rule-router",
       "source": {
         "source": "local",
-        "path": "./plugins/codex-path-rules"
+        "path": "./plugins/codex-rule-router"
       },
       "policy": {
         "installation": "AVAILABLE",
