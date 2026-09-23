@@ -1,7 +1,7 @@
 {
   "name": "codex-rule-router",
-  "version": "0.1.0",
-  "description": "Load repository rules automatically when Codex touches matching paths.",
+  "version": "0.2.0",
+  "description": "Load repository rules automatically when Codex or GitHub Copilot touches matching paths.",
   "author": {
     "name": "younglaecho"
   },

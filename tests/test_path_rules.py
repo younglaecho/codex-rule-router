@@ -25,6 +25,21 @@ class PathRulesTest(unittest.TestCase):
         (root / ".codex" / "rules" / "frontend.md").write_text(rule_text, encoding="utf-8")
         return temporary, root
 
+    def test_copilot_manifest_wires_copilot_adapter(self):
+        plugin_root = SCRIPT.parents[1]
+        manifest = json.loads((plugin_root / "plugin.json").read_text(encoding="utf-8"))
+        hooks_path = plugin_root / manifest["hooks"]
+        hooks = json.loads(hooks_path.read_text(encoding="utf-8"))
+        marketplace_path = plugin_root.parents[1] / ".github" / "plugin" / "marketplace.json"
+        marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+        entry = marketplace["plugins"][0]
+        self.assertEqual(manifest["version"], entry["version"])
+        self.assertEqual(entry["source"], "plugins/codex-rule-router")
+        self.assertEqual(hooks["version"], 1)
+        pre_tool = hooks["hooks"]["PreToolUse"][0]
+        self.assertEqual(pre_tool["matcher"], "*")
+        self.assertIn("--client copilot", pre_tool["bash"])
+
     def test_globs_support_recursive_braces_and_exclusions(self):
         temporary, root = self.make_project(
             """---
@@ -56,6 +71,14 @@ Use React conventions.
         candidates = path_rules.extract_candidates("apply_patch", {"command": command})
         self.assertEqual(candidates, {"fe/app/page.tsx", "fe/app/new.ts", "old.txt"})
 
+    def test_copilot_patch_argument_extracts_every_file(self):
+        patch = """*** Begin Patch
+*** Update File: fe/app/page.tsx
+*** Add File: fe/app/new.ts
+*** End Patch"""
+        candidates = path_rules.extract_candidates("Edit", patch)
+        self.assertEqual(candidates, {"fe/app/page.tsx", "fe/app/new.ts"})
+
     def test_first_match_in_turn_denies_then_allows(self):
         temporary, root = self.make_project(
             """---
@@ -82,6 +105,20 @@ Use the shared component library.
         )
         self.assertIn("Use the shared component library.", first["hookSpecificOutput"]["additionalContext"])
         self.assertIsNone(second)
+
+    def test_copilot_output_is_flat_and_carries_rules_in_denial_reason(self):
+        common = path_rules.deny(
+            "Retry after loading rules.",
+            additional_context="Apply this frontend rule, then retry.",
+        )
+        output = path_rules.render_output(common, "copilot")
+        self.assertEqual(
+            output,
+            {
+                "permissionDecision": "deny",
+                "permissionDecisionReason": "Apply this frontend rule, then retry.",
+            },
+        )
 
     def test_rule_is_loaded_once_per_session(self):
         temporary, root = self.make_project(
@@ -129,6 +166,35 @@ Frontend.
                 "cwd": str(root),
                 "hook_event_name": "SessionStart",
                 "source": "compact",
+            },
+            {"PLUGIN_DATA": str(data)},
+        )
+        self.assertIsNotNone(path_rules.process_event(edit, {"PLUGIN_DATA": str(data)}))
+
+    def test_copilot_precompact_resets_session_rules(self):
+        temporary, root = self.make_project(
+            """---
+paths: ["fe/**"]
+---
+Frontend.
+"""
+        )
+        self.addCleanup(temporary.cleanup)
+        data = root / "plugin-data"
+        edit = {
+            "session_id": "copilot-session-1",
+            "cwd": str(root),
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Edit",
+            "tool_input": {"path": "fe/a.ts"},
+        }
+        self.assertIsNotNone(path_rules.process_event(edit, {"PLUGIN_DATA": str(data)}))
+        self.assertIsNone(path_rules.process_event(edit, {"PLUGIN_DATA": str(data)}))
+        path_rules.process_event(
+            {
+                "session_id": "copilot-session-1",
+                "cwd": str(root),
+                "hook_event_name": "PreCompact",
             },
             {"PLUGIN_DATA": str(data)},
         )
@@ -230,7 +296,7 @@ Version one.
         }
         output = path_rules.process_event(event, {"PLUGIN_DATA": str(root / "data")})
         self.assertEqual(output["hookSpecificOutput"]["permissionDecision"], "deny")
-        self.assertIn("Invalid Codex path rule", json.dumps(output))
+        self.assertIn("Invalid path rule", json.dumps(output))
 
     def test_nested_cwd_normalizes_project_relative_path(self):
         temporary, root = self.make_project(

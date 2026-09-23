@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "bash": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/path_rules.py\" --client copilot",
+        "powershell": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/path_rules.py\" --client copilot",
+        "timeoutSec": 10
+      }
+    ],
+    "PreCompact": [
+      {
+        "type": "command",
+        "bash": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/path_rules.py\" --client copilot",
+        "powershell": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/path_rules.py\" --client copilot",
+        "timeoutSec": 10
+      }
+    ],
+    "PreToolUse": [
+      {
+        "type": "command",
+        "matcher": "*",
+        "bash": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/path_rules.py\" --client copilot",
+        "powershell": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/path_rules.py\" --client copilot",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}

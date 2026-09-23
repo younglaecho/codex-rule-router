@@ -1,13 +1,13 @@
 # Codex Rule Router
 
-Path-scoped repository instructions for Codex, similar to path-filtered rule
-files in other coding agents.
+Path-scoped repository instructions for Codex and GitHub Copilot CLI, similar
+to path-filtered rule files in other coding agents.
 
-The plugin watches local tool calls with a `PreToolUse` hook. When a tool touches
-a path matching `.codex/rules/**/*.md`, it stops that first call and returns the
-matching instructions to Codex. Codex then retries with those rules in context.
+The plugin watches tool calls with a `PreToolUse` hook. When a tool touches a
+path matching `.codex/rules/**/*.md`, it stops that first call and returns the
+matching instructions to the agent. The agent then retries with those rules.
 
-## Install
+## Install for Codex
 
 ```bash
 codex plugin marketplace add younglaecho/codex-rule-router --ref main
@@ -19,6 +19,21 @@ when Codex prompts you.
 
 For local development, replace `younglaecho/codex-rule-router --ref main` with
 the path to this repository.
+
+## Install for GitHub Copilot CLI
+
+```bash
+copilot plugin marketplace add younglaecho/codex-rule-router
+copilot plugin install codex-rule-router@codex-rule-router
+```
+
+Start a new Copilot CLI session after installation. The Copilot adapter uses the
+same `.codex/rules/**/*.md` files as Codex.
+
+Copilot hook support currently covers Copilot CLI. GitHub's hook API is also
+available to Copilot cloud agent through repository configuration, but this
+plugin has only been verified end to end with Copilot CLI. GitHub Copilot IDE
+extensions do not currently load these CLI hooks.
 
 ## Configure a repository
 
@@ -64,15 +79,16 @@ Use multiple rule files to keep instructions short and focused:
 
 ## Behavior
 
-The hook runs for local tool calls, including `apply_patch`, shell tools, and MCP
-tools. It extracts paths from file tool arguments, patch headers, and path-like
-shell tokens. Each matching rule is loaded once per Codex session. A changed
-rule is loaded again immediately, and compaction resets the loaded-rule state.
+The hook runs for local tool calls, including patch, file, shell, and MCP tools.
+It extracts paths from file tool arguments, patch headers, and path-like shell
+tokens. Each matching rule is loaded once per agent session. A changed rule is
+loaded again immediately, and compaction resets the loaded-rule state.
 
 The first matching call is denied on purpose. This prevents an edit from running
-before Codex receives its scoped instructions. The rule text is sent through
-`hookSpecificOutput.additionalContext`; the denial reason asks Codex to retry
-without user intervention.
+before the agent receives its scoped instructions. Codex receives the rule text
+through `hookSpecificOutput.additionalContext`. Copilot receives the same text
+in `permissionDecisionReason`, which is returned to the agent after the denial.
+Both agents then retry without user intervention.
 
 The frontmatter is compatible with Claude-style `paths`. To share the same rule
 files, point `.codex/rules` at an existing `.claude/rules` directory with a
@@ -90,9 +106,7 @@ python3 plugins/codex-rule-router/hooks/path_rules.py --validate --cwd /path/to/
 python3 plugins/codex-rule-router/hooks/path_rules.py --check fe/app/page.tsx --event edit --cwd /path/to/project
 ```
 
-For an end-to-end Codex test without installing the plugin, follow
-[`VERIFY.md`](./VERIFY.md). It uses `demo-project/.codex/hooks.json` and the same
-hook implementation shipped by the plugin.
+For end-to-end Codex and Copilot CLI checks, follow [`VERIFY.md`](./VERIFY.md).
 
 ## Limits
 

@@ -1,0 +1,25 @@
+{
+  "name": "codex-rule-router",
+  "owner": {
+    "name": "younglaecho"
+  },
+  "metadata": {
+    "description": "Path-scoped repository rules for Codex and GitHub Copilot CLI.",
+    "version": "0.2.0"
+  },
+  "plugins": [
+    {
+      "name": "codex-rule-router",
+      "description": "Load repository rules automatically when an agent touches matching paths.",
+      "version": "0.2.0",
+      "source": "plugins/codex-rule-router",
+      "author": {
+        "name": "younglaecho"
+      },
+      "homepage": "https://github.com/younglaecho/codex-rule-router",
+      "repository": "https://github.com/younglaecho/codex-rule-router",
+      "license": "MIT",
+      "keywords": ["copilot", "codex", "hooks", "path-rules"]
+    }
+  ]
+}

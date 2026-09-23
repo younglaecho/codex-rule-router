@@ -1,0 +1,13 @@
+{
+  "name": "codex-rule-router",
+  "version": "0.2.0",
+  "description": "Load repository rules automatically when Codex or GitHub Copilot touches matching paths.",
+  "author": {
+    "name": "younglaecho"
+  },
+  "homepage": "https://github.com/younglaecho/codex-rule-router",
+  "repository": "https://github.com/younglaecho/codex-rule-router",
+  "license": "MIT",
+  "keywords": ["copilot", "codex", "hooks", "path-rules"],
+  "hooks": "hooks/copilot-hooks.json"
+}

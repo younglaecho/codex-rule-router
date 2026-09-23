@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Codex PreToolUse hook for repository path-scoped rules.
+"""Path-scoped rule hook for Codex and GitHub Copilot CLI.
 
 Rule files live under <repository>/.codex/rules/**/*.md. Each rule has a
 small YAML-compatible frontmatter subset with a required `paths` list.
 The first matching tool call in a session is denied while the rule text is
-added to model context. Codex can then retry with those rules available.
+returned to the active agent. The agent can then retry with those rules.
 """
 
 from __future__ import annotations
@@ -296,12 +296,20 @@ def _walk_path_values(value: Any, key: str | None = None) -> Iterable[str]:
 
 def extract_candidates(tool_name: str, tool_input: Any) -> set[str]:
     candidates = set(_walk_path_values(tool_input))
-    command = tool_input.get("command", "") if isinstance(tool_input, Mapping) else ""
-    if not isinstance(command, str):
+    if isinstance(tool_input, str):
+        command = tool_input if tool_name == "Bash" else ""
+        patch_values = [tool_input]
+    elif isinstance(tool_input, Mapping):
+        command = tool_input.get("command", "")
+        patch_values = [tool_input.get(key) for key in ("command", "patch", "diff", "input")]
+    else:
         return candidates
-    for match in PATCH_PATH_RE.finditer(command):
-        candidates.add(next(group for group in match.groups() if group is not None))
-    if tool_name == "Bash":
+    for value in patch_values:
+        if not isinstance(value, str):
+            continue
+        for match in PATCH_PATH_RE.finditer(value):
+            candidates.add(next(group for group in match.groups() if group is not None))
+    if tool_name == "Bash" and isinstance(command, str):
         for match in COMMAND_PATH_RE.finditer(command):
             value = match.group(1).rstrip("'\"),;:")
             if "://" not in value:
@@ -373,7 +381,7 @@ def _save_state(path: Path, loaded: Iterable[str]) -> None:
 
 def build_rule_context(rules: Sequence[Rule], paths: Sequence[str]) -> str:
     sections = [
-        "Codex path-scoped rules matched this tool call.",
+        "Path-scoped repository rules matched this tool call.",
         "Review and apply these repository instructions, then retry the tool call.",
         "Matched paths: " + ", ".join(sorted(paths)),
     ]
@@ -402,6 +410,31 @@ def deny(reason: str, additional_context: str | None = None) -> dict[str, Any]:
     }
 
 
+def render_output(output: Mapping[str, Any], client: str) -> dict[str, Any]:
+    """Render the common decision in the hook protocol used by each client."""
+    if client == "codex":
+        return dict(output)
+    if client != "copilot":
+        raise ValueError(f"unsupported hook client: {client}")
+
+    specific = output.get("hookSpecificOutput", {})
+    if not isinstance(specific, Mapping):
+        return {}
+    rendered: dict[str, Any] = {}
+    decision = specific.get("permissionDecision")
+    if decision is not None:
+        rendered["permissionDecision"] = decision
+    context = specific.get("additionalContext")
+    reason = specific.get("permissionDecisionReason")
+    if isinstance(context, str) and context:
+        # Copilot config-file preToolUse hooks have no additionalContext field.
+        # A denial reason is returned to the agent, so carry the rules there.
+        rendered["permissionDecisionReason"] = context
+    elif reason is not None:
+        rendered["permissionDecisionReason"] = reason
+    return rendered
+
+
 def process_event(event: Mapping[str, Any], environ: Mapping[str, str] | None = None) -> dict[str, Any] | None:
     env = os.environ if environ is None else environ
     cwd = Path(str(event.get("cwd") or os.getcwd())).resolve()
@@ -409,7 +442,8 @@ def process_event(event: Mapping[str, Any], environ: Mapping[str, str] | None = 
     session_id = str(event.get("session_id") or "unknown-session")
     data_dir = Path(env.get("PLUGIN_DATA") or (Path(tempfile.gettempdir()) / "codex-rule-router"))
     state_path = _state_path(data_dir, session_id)
-    if event.get("hook_event_name") == "SessionStart":
+    hook_event_name = event.get("hook_event_name")
+    if hook_event_name in {"SessionStart", "PreCompact"}:
         try:
             state_path.unlink(missing_ok=True)
         except OSError:
@@ -418,7 +452,7 @@ def process_event(event: Mapping[str, Any], environ: Mapping[str, str] | None = 
 
     rules, errors = load_rules(root)
     if errors:
-        return deny("Invalid Codex path rule configuration:\n" + "\n".join(f"- {error}" for error in errors))
+        return deny("Invalid path rule configuration:\n" + "\n".join(f"- {error}" for error in errors))
     if not rules:
         return None
 
@@ -479,7 +513,13 @@ def check_command(cwd: Path, raw_paths: Sequence[str], event_kind: str) -> int:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Codex path-scoped rules hook")
+    parser = argparse.ArgumentParser(description="Path-scoped rules hook for coding agents")
+    parser.add_argument(
+        "--client",
+        choices=("codex", "copilot"),
+        default="codex",
+        help="hook output protocol (default: codex)",
+    )
     parser.add_argument("--validate", action="store_true", help="validate rules in the current repository")
     parser.add_argument("--check", nargs="+", metavar="PATH", help="show rules matching one or more paths")
     parser.add_argument("--event", choices=sorted(VALID_EVENTS), default="edit", help="event used by --check")
@@ -500,7 +540,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
     output = process_event(event)
     if output is not None:
-        json.dump(output, sys.stdout, ensure_ascii=False)
+        json.dump(render_output(output, args.client), sys.stdout, ensure_ascii=False)
         sys.stdout.write("\n")
     return 0
 

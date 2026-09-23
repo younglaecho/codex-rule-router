@@ -31,3 +31,35 @@ Expected lifecycle:
    changes or the conversation is compacted.
 
 Reset `fe/result.txt` to `before` before repeating the test in a fresh task.
+
+## Verify in GitHub Copilot CLI
+
+Install the local development plugin:
+
+```bash
+copilot plugin install ./plugins/codex-rule-router
+```
+
+Then run the same edit from the repository root:
+
+```bash
+printf 'before\n' > demo-project/fe/result.txt
+copilot -C demo-project \
+  -p 'Change fe/result.txt content to after.' \
+  --allow-all --no-ask-user --no-auto-update
+```
+
+Expected content:
+
+```text
+after
+PATH_RULES_LOADED=true
+```
+
+The first Copilot `Edit` call is denied with the matching rule in
+`permissionDecisionReason`. Copilot retries the patch with the required final
+line. Remove the development install afterward with:
+
+```bash
+copilot plugin uninstall codex-rule-router
+```

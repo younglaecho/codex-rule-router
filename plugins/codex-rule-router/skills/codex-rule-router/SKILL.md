@@ -1,6 +1,6 @@
 ---
 name: codex-rule-router
-description: Configure, validate, or troubleshoot repository rules that apply automatically based on file paths. Use when a user asks for Claude-style path rules, scoped coding conventions, or .codex/rules setup.
+description: Configure, validate, or troubleshoot repository rules that apply automatically in Codex or GitHub Copilot CLI based on file paths. Use when a user asks for Claude-style path rules, scoped coding conventions, or .codex/rules setup.
 ---
 
 # Codex Rule Router
@@ -35,9 +35,10 @@ with higher `priority` are injected first.
 Keep each rule focused. Put instructions that always apply in `AGENTS.md`; use
 path rules only when the instruction depends on the file being accessed.
 
-The hook stops the first matching tool call in each Codex session, injects the
-matching instructions through `additionalContext`, and asks Codex to retry.
-Compaction clears the loaded-rule state so required instructions are injected
+The hook stops the first matching tool call in each agent session and asks the
+agent to retry. Codex receives matching instructions through
+`additionalContext`; GitHub Copilot CLI receives them through the denial reason.
+Compaction clears the loaded-rule state so required instructions are returned
 again.
 
 To validate or inspect matching behavior, run the hook script from the installed
